@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "Focus Lock",
+  "version": "0.1.0",
+  "description": "Start one focus timer that blocks Instagram and X/Twitter while optionally enabling Apple Focus.",
+  "permissions": [
+    "alarms",
+    "declarativeNetRequest",
+    "nativeMessaging",
+    "storage"
+  ],
+  "host_permissions": [
+    "*://instagram.com/*",
+    "*://*.instagram.com/*",
+    "*://x.com/*",
+    "*://*.x.com/*",
+    "*://twitter.com/*",
+    "*://*.twitter.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Focus Lock"
+  }
+}

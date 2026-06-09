@@ -1,0 +1,13 @@
+{
+  "name": "focus-lock",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "validate": "./scripts/validate.sh",
+    "test:background": "node scripts/test-extension-background.js",
+    "test:e2e": "node scripts/test-extension-e2e.js"
+  },
+  "devDependencies": {
+    "playwright": "^1.56.0"
+  }
+}
