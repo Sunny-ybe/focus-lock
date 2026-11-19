@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
+import os
 import subprocess
 import sys
 
 CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
-EXTENSION = "/Users/sashikantkumar/Desktop/Projects/focus-lock/extension"
+EXTENSION = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "extension")
 PROFILE = "/private/tmp/focus-lock-chrome-profile"
 
 

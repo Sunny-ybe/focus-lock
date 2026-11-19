@@ -3,7 +3,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const { chromium } = require("playwright");
 
-const EXTENSION = "/Users/sashikantkumar/Desktop/Projects/focus-lock/extension";
+const EXTENSION = require("node:path").resolve(__dirname, "..", "extension");
 const PROFILE = "/private/tmp/focus-lock-e2e-profile";
 
 async function main() {

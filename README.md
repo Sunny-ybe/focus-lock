@@ -1,65 +1,76 @@
-# Focus Lock
+<h1 align="center">Focus Lock</h1>
 
-A personal Chrome focus timer that blocks Instagram and X/Twitter, with an optional macOS native helper that toggles Apple Focus so notifications are silenced on your Mac and iPhone.
+<p align="center"><strong>Start a timer and distracting sites stay blocked until it ends. No stop button.</strong><br/>
+It also turns on Apple Focus, so your Mac and iPhone go quiet too.</p>
 
-## What it can and cannot do
+<p align="center">
+  <img alt="Chrome MV3" src="https://img.shields.io/badge/Chrome-Manifest%20V3-4285F4?logo=googlechrome&logoColor=white">
+  <img alt="JavaScript" src="https://img.shields.io/badge/JavaScript-F7DF1E?logo=javascript&logoColor=black">
+  <img alt="Python" src="https://img.shields.io/badge/native%20host-Python-3776AB?logo=python&logoColor=white">
+  <img alt="macOS Shortcuts" src="https://img.shields.io/badge/macOS-Shortcuts-000000?logo=apple&logoColor=white">
+  <img alt="Playwright" src="https://img.shields.io/badge/tested%20with-Playwright-2EAD33?logo=playwright&logoColor=white">
+</p>
 
-Focus Lock can block the chosen sites inside Chrome until the timer ends. Instagram and X/Twitter are always included, and you can add more sites from the popup before starting a lock. The extension has no stop button while locked, and the lock survives Chrome restarts.
+<p align="center">
+  <img src="docs/screenshots/setup.png" alt="Focus Lock popup: set minutes, default blocked sites Instagram, X and Twitter, plus a custom site" width="300">
+  &nbsp;&nbsp;
+  <img src="docs/screenshots/locked.png" alt="Focus Lock locked state: 44:53 remaining, 6 websites blocked until the timer ends" width="300">
+</p>
 
-Chrome still lets you disable or remove your own extensions. A normal personal extension cannot prevent uninstalling itself.
+## Why
 
-## Apple Focus setup
+Most site blockers have an off switch one click away, so they don't hold up when you're tempted. And blocking sites in the browser does nothing about your phone buzzing. Focus Lock fixes both: once a lock starts, it can't be stopped early from the extension, and it reaches past the browser to silence notifications on all your Apple devices.
 
-Create two shortcuts in the macOS Shortcuts app:
+## What it does
 
-1. `Focus Lock Start`
-   - Add the Set Focus action.
-   - Set your Focus mode, for example `Deep Focus`, to On.
+- **Blocks sites until the timer ends.** Instagram and X/Twitter are always on the list, and you can add more before you start a lock.
+- **No way out early.** There's no stop button while locked, and the lock survives Chrome restarts because its state and end time are saved and re-checked on every launch.
+- **Silences your devices.** A small macOS helper runs your *Focus Lock Start* / *Stop* Shortcuts, which turn Apple Focus on and off. With Share Across Devices enabled, your iPhone follows along.
+- **Is honest about its limits.** Chrome always lets you remove your own extensions, and no regular extension can prevent that. Focus Lock just makes quitting take deliberate effort.
 
-2. `Focus Lock Stop`
-   - Add the Set Focus action.
-   - Set the same Focus mode to Off.
+## How it works
 
-On your Apple devices, enable Share Across Devices for Focus so your iPhone follows the Mac Focus state.
+```
+Popup ──start lock──▶ background service worker
+                      ├─ chrome.storage    saves lock state + end time
+                      ├─ chrome.alarms     wakes up when the lock ends
+                      ├─ declarativeNetRequest  dynamic block rules
+                      └─ native messaging ──▶ focus_lock_host.py (macOS)
+                                              └─ `shortcuts run "Focus Lock Start"`
+```
 
-## Chrome setup
+The Python native host does only two things: run the start Shortcut or run the stop Shortcut. It runs nothing else, so the browser can't use it to execute other commands. If the helper fails, sites are still blocked and the popup says that Apple Focus didn't turn on. The lock's end time is saved as an exact clock time rather than a countdown, so restarting Chrome never resets the timer.
 
-1. Open `chrome://extensions`.
-2. Enable Developer mode.
-3. Click Load unpacked.
-4. Select:
+## Setup
 
-   `/Users/sashikantkumar/Desktop/Projects/focus-lock/extension`
+**1. Create two macOS Shortcuts** in the Shortcuts app:
 
-5. Copy the loaded extension ID.
-6. Install the native messaging host:
+| Name | Action |
+| --- | --- |
+| `Focus Lock Start` | Set Focus → your Focus mode (e.g. *Deep Focus*) → **On** |
+| `Focus Lock Stop` | Set Focus → the same mode → **Off** |
 
-   ```sh
-   /Users/sashikantkumar/Desktop/Projects/focus-lock/scripts/install-native-host.sh <extension-id>
-   ```
+Turn on **Share Across Devices** in Focus settings so your iPhone follows your Mac.
 
-## Local helper test
+**2. Load the extension.** Open `chrome://extensions`, turn on **Developer mode**, click **Load unpacked**, select the `extension/` folder, and copy the extension ID.
 
-From the project folder:
+**3. Install the native helper:**
 
-```sh
-./scripts/validate.sh
-node scripts/test-extension-background.js
-npm run test:e2e
-./scripts/test-native-host.py start
+```bash
+./scripts/install-native-host.sh <extension-id>
+```
+
+## Testing
+
+```bash
+npm install && npx playwright install chromium
+./scripts/validate.sh          # runs every repeatable check below
+npm run test:background        # service-worker logic
+npm run test:e2e               # full browser test
+./scripts/test-native-host.py start   # runs your real Shortcuts
 ./scripts/test-native-host.py stop
 ```
 
-The native-host commands will run the matching Apple Shortcuts if they exist. The E2E test uses Playwright's Chrome for Testing build because current branded Google Chrome no longer accepts the old command-line unpacked extension flags.
+The end-to-end test loads the extension in Chrome for Testing, adds a custom site, starts a one-minute lock, and confirms that Instagram and the custom site are blocked while a neutral page still loads. It uses Chrome for Testing because current Google Chrome no longer accepts unpacked extensions from the command line.
 
-## In-Chrome self-test
-
-After loading the extension through `chrome://extensions`, open its extension ID URL:
-
-```text
-chrome-extension://<extension-id>/self-test.html
-```
-
-Click Run. This checks the real background worker, validates the blocking regex rules through Chrome's DNR API, starts a one-minute lock, and verifies the stored lock can be read.
-
-The included `scripts/test-extension-e2e.js` loads the extension in Chrome for Testing, adds a custom blocked site, starts a one-minute lock, verifies the popup and self-test page, confirms Instagram and the custom site are blocked, and confirms a neutral page still loads.
+There's also an in-browser self-test: open `chrome-extension://<extension-id>/self-test.html` and click **Run**. It validates the blocking rules through Chrome's own API and runs a real one-minute lock.
